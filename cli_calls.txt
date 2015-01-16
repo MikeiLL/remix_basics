@@ -30,9 +30,48 @@ blended = bl((track1, malcolm), (track1_list, malcolm_list))
 
 >>> blended.__str__()
 'Blend [6.032, 0.726] -> [11.276, 6.422] (5.470)\taudio/Track01.mp3 + audio/malcolmmarsden.mp3'
-
+ 
 combined = []
+
 combined.extend([playable1,cfade2])
 combined.extend([cfade])
 
+playable1 = pb(track1, tr1s, 10)
+
 render(combined, 'combined.mp3')
+
+
+>>> combined.extend([blended])
+>>> render(combined, 'combined.mp3')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/Users/mikekilmer/Envs/GLITCH/lib/python2.7/site-packages/echonest/remix/action.py", line 45, in render
+    out = assemble(pieces, numChannels=2, sampleRate=44100, verbose=verbose)
+  File "/Users/mikekilmer/Envs/GLITCH/lib/python2.7/site-packages/echonest/remix/audio.py", line 807, in assemble
+    return AudioData(ndarray=numpy.concatenate([a.data for a in audioDataList]),
+AttributeError: 'NoneType' object has no attribute 'data'
+
+from action import Crossmatch as cm
+
+matched = cm((track1, malcolm), (track1_list, malcolm_list))
+>>> combined.pop()
+<Blend 'audio/Track01.mp3' and 'audio/malcolmmarsden.mp3'>
+>>> combined.extend([matched])
+>>> render(combined, 'combined.mp3')
+['en-ffmpeg', '-i', '/var/folders/jj/2s5dn_7s42l75qyx7x5nbpwr0000gn/T/tmpCqzsgS.wav', '-y', '-ab', '128k', '-ac', '2', '-ar', '44100', 'combined.mp3']
+Deleting: /var/folders/jj/2s5dn_7s42l75qyx7x5nbpwr0000gn/T/tmpCqzsgS.wav
+(<echonest.remix.audio.AudioData object at 0x107cf85d0>, 'combined.mp3')
+
+only_cmmed = []
+
+>>> only_cmmed.extend(matched)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+TypeError: 'Crossmatch' object is not iterable
+>>> only_cmmed.extend([matched])
+>>> render(only_cmmed, 'combined.mp3')
+['en-ffmpeg', '-i', '/var/folders/jj/2s5dn_7s42l75qyx7x5nbpwr0000gn/T/tmpIkizun.wav', '-y', '-ab', '128k', '-ac', '2', '-ar', '44100', 'combined.mp3']
+Deleting: /var/folders/jj/2s5dn_7s42l75qyx7x5nbpwr0000gn/T/tmpIkizun.wav
+(<echonest.remix.audio.AudioData object at 0x107cf85d0>, 'combined.mp3')
+
+chopek = mtu.make_save_one('audio/chopek.mp3')
