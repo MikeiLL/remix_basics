@@ -1,0 +1,38 @@
+import mix_tracks_utils as mtu
+from action import Crossfade as cf
+
+track1 = mtu.lazarus('audio/Track01.mp3.analysis.en')
+malcolm = mtu.lazarus('audio/malcolmmarsden.mp3.analysis.en')
+
+tr1s = track1.analysis.tatums[40].start
+mms = malcolm.analysis.tatums[10].start
+cfade = cf((track1, malcolm),(tr1s, mms), 12)
+
+tr1s2 = track1.analysis.tatums[10].start
+mms2 = malcolm.analysis.tatums[20].start
+cfade2 = cf((malcolm,track1),(mms2,tr1s2), 14)
+
+cross_faded = cfade.render()
+cross_faded.encode('crossfade.mp3')
+
+from action import Blend as bl
+
+some_track1 = track1.analysis.tatums[20:40]
+some_malcolm = malcolm.analysis.tatums[0:20]
+
+track1_list = [(t.start, t.duration) for t in some_track1]
+malcolm_list = [(t.start, t.duration) for t in some_malcolm]
+
+blended = bl((track1, malcolm), (track1_list, malcolm_list))
+
+>>> blended
+<Blend 'audio/Track01.mp3' and 'audio/malcolmmarsden.mp3'>
+
+>>> blended.__str__()
+'Blend [6.032, 0.726] -> [11.276, 6.422] (5.470)\taudio/Track01.mp3 + audio/malcolmmarsden.mp3'
+
+combined = []
+combined.extend([playable1,cfade2])
+combined.extend([cfade])
+
+render(combined, 'combined.mp3')
