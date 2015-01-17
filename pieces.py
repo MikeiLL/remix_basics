@@ -40,11 +40,7 @@ Example:
     python pieces.py audio/GlitchBit_BJanoff.mp3 Abridged.mp3
 """
 
-try:
-    input_filename = sys.argv[1]
-except:
-     print(usage)
-     sys.exit(-1)
+
 try:
     output_filename = sys.argv[2]
 except IndexError:
@@ -215,15 +211,10 @@ def last_bits(track, units, num=4):
     """
     Return only the last num units
     """
-    result = audio.AudioQuantumList()
-    count = len(units)
+    count = len(track.analysis.segments)
     num = count - num
     print(num, count)
-    for unit in units[num:]:
-        if num < count:
-            result.append(units[num])
-            num += 1
-    return result
+    return track.analysis.segments[num:]
 
 def main(input_filename, output_filename):
     """
