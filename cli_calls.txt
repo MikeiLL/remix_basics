@@ -75,3 +75,34 @@ Deleting: /var/folders/jj/2s5dn_7s42l75qyx7x5nbpwr0000gn/T/tmpIkizun.wav
 (<echonest.remix.audio.AudioData object at 0x107cf85d0>, 'combined.mp3')
 
 chopek = mtu.make_save_one('audio/chopek.mp3')
+chopek_tatum_list = [(t.start, t.end) for t in chopek.analysis.tatums]
+chopek_segment_list = [(s.start, s.end) for s in chopek.analysis.segments]
+chopek_beat_list = [(b.start, b.end) for b in chopek.analysis.beats]
+
+import matplotlib.pyplot as plt
+>>> for i in chopek_tatum_list[:8]:
+...     for j in chopek_segment_list[:8]:
+...             plt.plot(i,[0,0], j,[3,3], linewidth=10)
+... 
+
+>>> plt.grid(True)
+>>> plt.title("Segs vs Tatums")
+>>> plt.text(0, .2, 'Segments')
+<matplotlib.text.Text object at 0x117112310>
+>>> plt.text(0, 0, 'Tatums')
+<matplotlib.text.Text object at 0x116e56790>
+plt.show()
+
+plt.title('Segments vs Tatums')
+plt.text(0, 1.3, 'Segments')
+plt.text(0, 2.2, 'Tatums')
+plt.text(0, 2.6, 'Beats')
+plt.axis([-1, 3, -1, 3])
+plt.grid(True)
+for i in chopek_segment_list[:8]:
+    plt.plot(i,[1,1], linewidth=10)
+for i in chopek_tatum_list[:8]:
+    plt.plot(i,[2,2], linewidth=10)
+for i in chopek_beat_list[:8]:
+    plt.plot(i,[2.5,2.5], linewidth=10)
+plt.show
