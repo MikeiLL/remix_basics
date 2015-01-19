@@ -211,10 +211,15 @@ def last_bits(track, units, num=4):
     """
     Return only the last num units
     """
-    count = len(track.analysis.segments)
+    result = audio.AudioQuantumList()
+    count = len(track.analysis.units)
     num = count - num
     print(num, count)
-    return track.analysis.segments[num:]
+    for unit in track.analysis.segments[num:]:
+        if num < count:
+            result.append(unit[num])
+            num += 1
+    return result
 
 def main(input_filename, output_filename):
     """

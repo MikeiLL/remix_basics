@@ -30,9 +30,9 @@ def make_save_one(filename):
     Get filename, make LocalAudioFile objects and save it. Return LAF.
     """
     audiofile = audio.LocalAudioFile(filename)
-    audiofile2 = audiofile
+    'audiofile2 = audiofile'
     audiofile.save()
-    return audiofile2
+    return audiofile
     
 def make_save_all(files):
     """
@@ -107,6 +107,43 @@ def analize(input_filename):
     """
     audiofile = audio.LocalAudioFile(input_filename)
     return audiofile.analysis
+    
+def visualize_analysis(track):
+    import matplotlib.pyplot as plt
+    
+    rates = ["tatums", "segments", "beats"]
+
+    title = "Start and End Bits of {}".format(track.filename)
+    plt.title(title)
+    plt.axis([-1, 5, -3, 3])
+    plt.grid(True)
+    
+    label_height = .2
+    graph_height = 0
+    for name in rates:
+        label_height += .5
+        graph_height += .5
+        plt.text(0, label_height, 'Start ' + name.capitalize())
+        for i in getattr(track.analysis, name)[:8]:
+            j = (i.start, i.end)
+            plt.plot(j,[graph_height,graph_height], linewidth=10)
+            
+    label_height = 0
+    graph_height = -.2
+    offset = '' 
+
+    for name in rates:
+        label_height -= .5
+        graph_height -= .5
+        plt.text(0, label_height, 'End ' + name.capitalize())
+        for i in getattr(track.analysis, name)[:8]:
+            j = (i.start, i.end)
+            while not offset:
+                offset = j[0]
+            k = (j[0] - offset, j[1] - offset)
+            plt.plot(k,[graph_height,graph_height], linewidth=10)
+    
+    plt.show()
 
 if __name__ == "__main__":
 	print(usage)
