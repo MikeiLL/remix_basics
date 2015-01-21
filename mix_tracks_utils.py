@@ -114,6 +114,7 @@ def visualize_analysis(track):
     rates = ["tatums", "segments", "beats"]
 
     title = "Start and End Bits of {}".format(track.filename)
+    plt.figure()
     plt.title(title)
     plt.axis([-1, 5, -3, 3])
     plt.grid(True)
@@ -130,7 +131,7 @@ def visualize_analysis(track):
             
     label_height = 0
     graph_height = -.2
-    offset = '' 
+    offset = None 
 
     for name in rates:
         label_height -= .5
@@ -138,13 +139,29 @@ def visualize_analysis(track):
         plt.text(0, label_height, 'End ' + name.capitalize())
         for i in getattr(track.analysis, name)[:8]:
             j = (i.start, i.end)
-            while not offset:
+            if offset is None:
                 offset = j[0]
             k = (j[0] - offset, j[1] - offset)
             plt.plot(k,[graph_height,graph_height], linewidth=10)
     
     plt.show()
-
+    
+def compare(track, rate1="segments", rate2="tatums", direction="start", number=8):
+    """
+    Get track and compare rates at start or end.
+    """
+    if direction == "end":
+        number = number - (number * 2)
+        section1 = getattr(track.analysis, rate1)[number:]
+    else:
+        section1 = getattr(track.analysis, rate1)[:number]
+    try:
+        print("{} {}: {}".format(direction, rate1, section1))
+    except AttributeError:
+        print("No {}.".format(rate1))
+    
+    
+    
 if __name__ == "__main__":
 	print(usage)
 	sys.exit(-1)

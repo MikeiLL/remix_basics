@@ -196,7 +196,7 @@ def trim_silence(track):
     
 def first_bits(track, units, num=4):
     """
-    Return only the first num units
+    Return only the first num units (segments, tatums, bars, beats).
     """
     result = audio.AudioQuantumList()
     count = 0
@@ -209,7 +209,7 @@ def first_bits(track, units, num=4):
     
 def last_bits(track, units, num=4):
     """
-    Return only the last num units
+    Return only the last num units (segments, tatums, bars, beats).
     """
     result = audio.AudioQuantumList()
     count = len(track.analysis.units)

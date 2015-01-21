@@ -1,5 +1,7 @@
 import mix_tracks_utils as mtu
 from action import Crossfade as cf
+from action import Playback as pb
+from action import render
 
 track1 = mtu.lazarus('audio/Track01.mp3.analysis.en')
 malcolm = mtu.lazarus('audio/malcolmmarsden.mp3.analysis.en')
