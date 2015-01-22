@@ -9,6 +9,8 @@ An AudioQuantumList can be used to render a remix.AudioData object like this:
 	out = audio.getpieces(audiofile, final["music"])
 Then render the new file with:
     out.encode(output_filename)
+    
+Rates can be in "beats", "tatums", "segments", "bars", "sections".
 
 By Mike iLL/mZoo.org, 2015-01-13.
 """
@@ -146,19 +148,46 @@ def visualize_analysis(track):
     
     plt.show()
     
-def compare(track, rate1="segments", rate2="tatums", direction="start", number=8):
+def compare(track, rate1="segments", rate2="tatums", direction="first", number=8):
     """
     Get track and compare rates at start or end.
     """
-    if direction == "end":
+    if direction == "final":
         number = number - (number * 2)
         section1 = getattr(track.analysis, rate1)[number:]
+        section2 = getattr(track.analysis, rate2)[number:]
     else:
         section1 = getattr(track.analysis, rate1)[:number]
+        section2 = getattr(track.analysis, rate2)[:number]
+        
     try:
-        print("{} {}: {}".format(direction, rate1, section1))
-    except AttributeError:
+        print("{} {} {} span {} to {}".format(direction.capitalize(), abs(number), rate1, section1[0].start, \
+                                                section1[-1].start + section1[-1].duration))
+    except IndexError:
         print("No {}.".format(rate1))
+        
+    try:
+        print("{} {} {} span {} to {}".format(direction.capitalize(), abs(number), rate2, section2[0].start, \
+                                                section2[-1].start + section2[-1].duration))
+    except IndexError:
+        print("No {}.".format(rate2))
+        
+def subsequent_downbeat(track):
+    """
+    Return the time, measured from track_time_zero, at which the first subsequent downbeat would occur.
+    """
+    final_eight = {"last_beat": track.analysis.beats[-1:][0].start,
+                    "avg_duration": sum([b.duration for b in track.analysis.beats[-8:]]) / 8,
+                    "track_duration": track.analysis.duration,
+                    "final_segment_start": track.analysis.segments[-1:][0].start,
+                    "final_segment_end": track.analysis.segments[-1:][0].start + \
+                                        track.analysis.segments[-1:][0].duration,
+                    "subsequent_beat": track.analysis.beats[-1:][0].start,}
+    while final_eight['subsequent_beat'] < final_eight['track_duration']:
+        final_eight['subsequent_beat'] += final_eight['avg_duration']
+        print("plus {} eq {}".format(final_eight['avg_duration'], final_eight['subsequent_beat']))
+        
+    return final_eight
     
     
     
