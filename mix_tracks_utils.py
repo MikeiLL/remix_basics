@@ -122,7 +122,10 @@ def visualize_analysis(track):
 	plt.figure()
 	plt.subplots_adjust(top=0.9)
 	plt.rcParams["axes.titlesize"] = 11
-	plt.axis([0, track.analysis.beats[9].start, -4, 4])
+	try:
+		plt.axis([0, track.analysis.beats[9].start, -4, 4])
+	except IndexError:
+		plt.axis([0, 6, -4, 4])
 	ax = plt.subplot(211)
 	ax.grid(True)
 	ax.set_title(title)
