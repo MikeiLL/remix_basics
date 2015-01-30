@@ -148,7 +148,6 @@ def visualize_analysis(track):
 		plt.text(0, label_height, 'End ' + name.capitalize())
 		for i in getattr(track.analysis, name)[-8:]:
 			j = (i.start, i.end)
-			print("we have {} at {}.".format(name, i.start))
 			if offset is None:
 				offset = j[0]
 			k = (j[0] - offset, j[1] - offset)
