@@ -182,22 +182,27 @@ def compare(track, rate1="segments", rate2="tatums", direction="first", number=8
     except IndexError:
         print("No {}.".format(rate2))
         
-def subsequent_downbeat(track):
+def end_trans(track):
     """
     Return the time, measured from track_time_zero, at which the first subsequent downbeat would occur.
     """
-    final_eight = {"last_beat": track.analysis.beats[-1:][0].start,
+    try:
+    	track.analysis.beats[-1]
+    except IndexError:
+    	return {"playback": (track.analysis.segments[-8].start, track.analysis.duration)}
+    	
+    final_eight = {"last_beat": track.analysis.beats[-1].start,
                     "avg_duration": sum([b.duration for b in track.analysis.beats[-8:]]) / 8,
-                    "piece_duration": track.analysis.duration - track.analysis.segments[-8:][0].start,
-                    "final_eight_start": track.analysis.segments[-8:][0].start,
-                    "final_segment_start": track.analysis.segments[-1:][0].start,
-                    "final_segment_end": track.analysis.segments[-1:][0].start + \
-                                        track.analysis.segments[-1:][0].duration,
-                    "subsequent_beat": track.analysis.beats[-1:][0].start,}
+                    "this_piece_duration": track.analysis.duration - track.analysis.segments[-8:][0].start,
+                    "final_eight_start": track.analysis.segments[-8].start,
+                    "final_segment_end": track.analysis.segments[-1].start + \
+                                        track.analysis.segments[-1].duration,
+                    "subsequent_beat": track.analysis.beats[-1].start}
     while final_eight['subsequent_beat'] < track.analysis.duration:
         final_eight['subsequent_beat'] += final_eight['avg_duration']
         #print("plus {} eq {}".format(final_eight['avg_duration'], final_eight['subsequent_beat']))
-        
+    final_eight["mix_me"] = (final_eight['subsequent_beat'], track.analysis.duration)
+    final_eight["playback"] = (track.analysis.segments[-8].start, final_eight['subsequent_beat'])
     return final_eight
     
 def lead_in(track):
