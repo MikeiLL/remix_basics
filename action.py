@@ -5,6 +5,7 @@ action.py
 
 Created by Tristan Jehan and Jason Sundram.
 """
+
 from __future__ import print_function
 import os
 from numpy import zeros, multiply, float32, mean, copy
@@ -15,6 +16,21 @@ from echonest.remix.audio import assemble, AudioData
 from cAction import limit, crossfade, fadein, fadeout
 
 import dirac
+
+
+ffmpeg_command = None
+for command in ("avconv", "ffmpeg", "en-ffmpeg"):
+	try:
+		subprocess.Popen([command],stdout=subprocess.PIPE,stderr=subprocess.STDOUT).wait()
+		ffmpeg_command = command
+		break
+	except OSError:
+		# The command wasn't found. Move on to the next one.
+		pass
+if not ffmpeg_command:
+	raise RuntimeError("No avconv/ffmpeg found, cannot continue")
+log.info("Using %r for audio conversion.",ffmpeg_command)
+echonest.remix.support.ffmpeg.FFMPEG = ffmpeg_command
 
 def rows(m):
     """returns the # of rows in a numpy matrix"""

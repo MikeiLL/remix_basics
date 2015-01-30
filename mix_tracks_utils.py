@@ -20,12 +20,27 @@ from Queue import Queue
 import glob
 import sys, os
 import pickle
+import subprocess
+import echonest
 
 usage = """
 Usage: 
     import mix_track_utils
 
 """
+
+ffmpeg_command = None
+for command in ("avconv", "ffmpeg", "en-ffmpeg"):
+	try:
+		subprocess.Popen([command],stdout=subprocess.PIPE,stderr=subprocess.STDOUT).wait()
+		ffmpeg_command = command
+		break
+	except OSError:
+		# The command wasn't found. Move on to the next one.
+		pass
+if not ffmpeg_command:
+	raise RuntimeError("No avconv/ffmpeg found, cannot continue")
+echonest.remix.support.ffmpeg.FFMPEG = ffmpeg_command
 
 def make_save_one(filename):
     """
@@ -182,28 +197,37 @@ def compare(track, rate1="segments", rate2="tatums", direction="first", number=8
     except IndexError:
         print("No {}.".format(rate2))
         
-def end_trans(track):
+def end_trans(track, beats_to_mix = 0):
     """
-    Return the time, measured from track_time_zero, at which the first subsequent downbeat would occur.
+    Return tuples with times to be sent to Playback and Crossmix objects
     """
     try:
     	track.analysis.beats[-1]
     except IndexError:
     	return {"playback": (track.analysis.segments[-8].start, track.analysis.duration)}
-    	
+    avg_duration = sum([b.duration for b in track.analysis.beats[-8:]]) / 8	
+    if beats_to_mix > 0:
+    	track_end = track.analysis.duration - (avg_duration * beats_to_mix)
+    else:
+    	track_end = track.analysis.duration
+
     final_eight = {"last_beat": track.analysis.beats[-1].start,
-                    "avg_duration": sum([b.duration for b in track.analysis.beats[-8:]]) / 8,
-                    "this_piece_duration": track.analysis.duration - track.analysis.segments[-8:][0].start,
-                    "final_eight_start": track.analysis.segments[-8].start,
-                    "final_segment_end": track.analysis.segments[-1].start + \
-                                        track.analysis.segments[-1].duration,
                     "subsequent_beat": track.analysis.beats[-1].start}
-    while final_eight['subsequent_beat'] < track.analysis.duration:
-        final_eight['subsequent_beat'] += final_eight['avg_duration']
-        #print("plus {} eq {}".format(final_eight['avg_duration'], final_eight['subsequent_beat']))
-    final_eight["mix_me"] = (final_eight['subsequent_beat'], track.analysis.duration)
-    final_eight["playback"] = (track.analysis.segments[-8].start, final_eight['subsequent_beat'])
-    return final_eight
+    while final_eight['subsequent_beat'] < track_end:
+        final_eight['subsequent_beat'] += avg_duration
+
+    #start, end, duration of playback part
+    final_eight["playback"] = (track.analysis.segments[-8].start, 
+    							track.analysis.beats[-1].start + track.analysis.beats[-1].duration,
+    							track.analysis.beats[-1].start + track.analysis.beats[-1].duration \
+    															- track.analysis.segments[-8].start)
+    
+    #start, end, duration of mix part
+    final_eight["mix_me"] = (final_eight['subsequent_beat'], track.analysis.duration, \
+    														track.analysis.duration - \
+    														final_eight['subsequent_beat']) 
+   
+    return (final_eight['playback'], final_eight["mix_me"])
     
 def lead_in(track):
 	"""
