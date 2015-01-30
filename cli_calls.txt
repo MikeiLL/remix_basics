@@ -34,11 +34,11 @@ blended = bl((track1, malcolm), (track1_list, malcolm_list))
 'Blend [6.032, 0.726] -> [11.276, 6.422] (5.470)\taudio/Track01.mp3 + audio/malcolmmarsden.mp3'
  
 combined = []
-
+playable1 = pb(track1, tr1s, 10)
 combined.extend([playable1,cfade2])
 combined.extend([cfade])
 
-playable1 = pb(track1, tr1s, 10)
+
 
 render(combined, 'combined.mp3')
 

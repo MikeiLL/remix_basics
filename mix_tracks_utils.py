@@ -44,7 +44,7 @@ def make_save_all(files):
 
     while not q.empty():
         file = q.get()
-        save_me(file)
+        make_save_one(file)
         
 def file_queue(files):
     """
@@ -57,7 +57,10 @@ def file_queue(files):
     
     return q
     
-def get_files(directory = 'audio/', extension = 'mp3'):
+def get_mp3s(directory = 'audio/', extension = 'mp3'):
+    return glob.glob(directory + '*.' + extension)
+    
+def get_saved(directory = 'audio/', extension = 'en'):
     return glob.glob(directory + '*.' + extension)
     
 def import_queue(q):
@@ -111,42 +114,47 @@ def analize(input_filename):
     return audiofile.analysis
     
 def visualize_analysis(track):
-    import matplotlib.pyplot as plt
-    
-    rates = ["tatums", "segments", "beats"]
+	import matplotlib.pyplot as plt
 
-    title = "Start and End Bits of {}".format(track.filename)
-    plt.figure()
-    plt.title(title)
-    plt.axis([-1, 5, -3, 3])
-    plt.grid(True)
-    
-    label_height = .2
-    graph_height = 0
-    for name in rates:
-        label_height += .5
-        graph_height += .5
-        plt.text(0, label_height, 'Start ' + name.capitalize())
-        for i in getattr(track.analysis, name)[:8]:
-            j = (i.start, i.end)
-            plt.plot(j,[graph_height,graph_height], linewidth=10)
-            
-    label_height = 0
-    graph_height = -.2
-    offset = None 
+	rates = ["tatums", "segments", "beats"]
 
-    for name in rates:
-        label_height -= .5
-        graph_height -= .5
-        plt.text(0, label_height, 'End ' + name.capitalize())
-        for i in getattr(track.analysis, name)[:8]:
-            j = (i.start, i.end)
-            if offset is None:
-                offset = j[0]
-            k = (j[0] - offset, j[1] - offset)
-            plt.plot(k,[graph_height,graph_height], linewidth=10)
-    
-    plt.show()
+	title = "Start and End Bits of {}".format(track.filename)
+	plt.figure()
+	plt.subplots_adjust(top=0.9)
+	plt.rcParams["axes.titlesize"] = 11
+	plt.axis([0, track.analysis.beats[9].start, -4, 4])
+	ax = plt.subplot(211)
+	ax.grid(True)
+	ax.set_title(title)
+	label_height = .05
+	graph_height = 0
+	for name in rates:
+		label_height += .5
+		graph_height += .5
+		plt.text(0, label_height, 'Start ' + name.capitalize())
+		for i in getattr(track.analysis, name)[:8]:
+			j = (i.start, i.end)
+			plt.plot(j,[graph_height,graph_height], linewidth=10)
+		
+	label_height = -.15
+	graph_height = -.2
+	offset = None 
+
+	ax1 = plt.subplot(212)
+	ax1.grid(True)
+	for name in rates:
+		label_height -= .5
+		graph_height -= .5
+		plt.text(0, label_height, 'End ' + name.capitalize())
+		for i in getattr(track.analysis, name)[-8:]:
+			j = (i.start, i.end)
+			print("we have {} at {}.".format(name, i.start))
+			if offset is None:
+				offset = j[0]
+			k = (j[0] - offset, j[1] - offset)
+			plt.plot(k,[graph_height,graph_height], linewidth=10)
+
+	plt.show()
     
 def compare(track, rate1="segments", rate2="tatums", direction="first", number=8):
     """
@@ -178,18 +186,23 @@ def subsequent_downbeat(track):
     """
     final_eight = {"last_beat": track.analysis.beats[-1:][0].start,
                     "avg_duration": sum([b.duration for b in track.analysis.beats[-8:]]) / 8,
-                    "track_duration": track.analysis.duration,
+                    "piece_duration": track.analysis.duration - track.analysis.segments[-8:][0].start,
+                    "final_eight_start": track.analysis.segments[-8:][0].start,
                     "final_segment_start": track.analysis.segments[-1:][0].start,
                     "final_segment_end": track.analysis.segments[-1:][0].start + \
                                         track.analysis.segments[-1:][0].duration,
                     "subsequent_beat": track.analysis.beats[-1:][0].start,}
-    while final_eight['subsequent_beat'] < final_eight['track_duration']:
+    while final_eight['subsequent_beat'] < track.analysis.duration:
         final_eight['subsequent_beat'] += final_eight['avg_duration']
-        print("plus {} eq {}".format(final_eight['avg_duration'], final_eight['subsequent_beat']))
+        #print("plus {} eq {}".format(final_eight['avg_duration'], final_eight['subsequent_beat']))
         
     return final_eight
     
-    
+def lead_in(track):
+	"""
+	Return the time between start of track and first beat.
+	"""
+	return track.analysis.beats
     
 if __name__ == "__main__":
 	print(usage)
