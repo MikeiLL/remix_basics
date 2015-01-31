@@ -217,10 +217,10 @@ def end_trans(track, beats_to_mix = 0):
         final_eight['subsequent_beat'] += avg_duration
 
     #start, end, duration of playback part
-    final_eight["playback"] = (track.analysis.segments[-8].start, 
+    final_eight["playback"] = (track.analysis.segments[-16].start, 
     							track.analysis.beats[-1].start + track.analysis.beats[-1].duration,
     							track.analysis.beats[-1].start + track.analysis.beats[-1].duration \
-    															- track.analysis.segments[-8].start)
+    															- track.analysis.segments[-16].start)
     
     #start, end, duration of mix part
     final_eight["mix_me"] = (final_eight['subsequent_beat'], track.analysis.duration, \
@@ -233,7 +233,12 @@ def lead_in(track):
 	"""
 	Return the time between start of track and first beat.
 	"""
-	return track.analysis.beats
+	avg_duration = sum([b.duration for b in track.analysis.beats[:8]]) / 8
+	earliest_beat = track.analysis.beats[0].start
+	while earliest_beat > 0:
+		earliest_beat -= avg_duration
+	offset = earliest_beat
+	return offset
     
 if __name__ == "__main__":
 	print(usage)
