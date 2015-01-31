@@ -11,9 +11,11 @@ import os
 from numpy import zeros, multiply, float32, mean, copy
 from math import atan, pi
 import sys
+import subprocess
 
 from echonest.remix.audio import assemble, AudioData
 from cAction import limit, crossfade, fadein, fadeout
+import echonest
 
 import dirac
 
@@ -29,7 +31,6 @@ for command in ("avconv", "ffmpeg", "en-ffmpeg"):
 		pass
 if not ffmpeg_command:
 	raise RuntimeError("No avconv/ffmpeg found, cannot continue")
-log.info("Using %r for audio conversion.",ffmpeg_command)
 echonest.remix.support.ffmpeg.FFMPEG = ffmpeg_command
 
 def rows(m):
