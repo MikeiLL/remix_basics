@@ -77,8 +77,15 @@ def get_mp3s(directory = 'audio/', extension = 'mp3'):
     
 def get_saved(directory = 'audio/', extension = 'en'):
     return glob.glob(directory + '*.' + extension)
-    
-def import_queue(q):
+        
+def lazarus(filename):
+    """
+    Get pickled (*.en) filename (path) and return echonest analysis object
+    """
+    with open(filename) as f:
+        return pickle.load(f)
+        
+def import_queue_gen(q):
     """
     Get a queue, iterate and yield a list of two imported LocalAudioFiles
     """
@@ -92,12 +99,19 @@ def import_queue(q):
         yield (audiofile1, audiofile2)
         t1 = t2
         
-def lazarus(filename):
-    """
-    Get pickled (*.en) filename (path) and return echonest analysis object
-    """
-    with open(filename) as f:
-        return pickle.load(f)
+def lazarus_queue(q):
+	container = {}
+	while not q.empty():
+		track = q.get()	
+		filename = track.replace('.mp3.analysis.en', '')
+		filename = filename.replace('audio/', '')
+		container[filename] = lazarus(track)
+	return container
+        
+def resurrect():
+    files = get_saved()
+    q = file_queue(files)
+    return lazarus_queue(q)
         
 def show_transitions():
     while not q.empty():
