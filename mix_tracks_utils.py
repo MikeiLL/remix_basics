@@ -17,6 +17,9 @@ By Mike iLL/mZoo.org, 2015-01-13.
 from __future__ import print_function
 import echonest.remix.audio as audio
 from Queue import Queue
+from action import Crossfade as cf
+from action import Playback as pb
+from action import render
 import glob
 import sys, os
 import pickle
@@ -215,33 +218,37 @@ def end_trans(track, beats_to_mix = 0):
     """
     Return tuples with times to be sent to Playback and Crossmix objects
     """
+    num_of_segs = 16
+    for seg in track.analysis.segments[-16:]:
+    	if seg.loudness_max < -40:
+    		num_of_segs += 1
     try:
     	track.analysis.beats[-1]
     except IndexError:
-    	return {"playback": (track.analysis.segments[-8].start, track.analysis.duration)}
+    	return {"playback": (track.analysis.segments[-num_of_segs].start, track.analysis.duration)}
     avg_duration = sum([b.duration for b in track.analysis.beats[-8:]]) / 8	
     if beats_to_mix > 0:
     	track_end = track.analysis.duration - (avg_duration * beats_to_mix)
     else:
     	track_end = track.analysis.duration
 
-    final_eight = {"last_beat": track.analysis.beats[-1].start,
+    final_segments = {"last_beat": track.analysis.beats[-1].start,
                     "subsequent_beat": track.analysis.beats[-1].start}
-    while final_eight['subsequent_beat'] < track_end:
-        final_eight['subsequent_beat'] += avg_duration
+    while final_segments['subsequent_beat'] < track_end:
+        final_segments['subsequent_beat'] += avg_duration
 
     #start, end, duration of playback part
-    final_eight["playback"] = (track.analysis.segments[-16].start, 
+    final_segments["playback"] = (track.analysis.segments[-num_of_segs].start, 
     							track.analysis.beats[-1].start + track.analysis.beats[-1].duration,
     							track.analysis.beats[-1].start + track.analysis.beats[-1].duration \
-    															- track.analysis.segments[-16].start)
+    															- track.analysis.segments[-num_of_segs].start)
     
     #start, end, duration of mix part
-    final_eight["mix_me"] = (final_eight['subsequent_beat'], track.analysis.duration, \
+    final_segments["mix_me"] = (final_segments['subsequent_beat'], track.analysis.duration, \
     														track.analysis.duration - \
-    														final_eight['subsequent_beat']) 
+    														final_segments['subsequent_beat']) 
    
-    return (final_eight['playback'], final_eight["mix_me"])
+    return (final_segments['playback'], final_segments["mix_me"])
     
 def lead_in(track):
 	"""
