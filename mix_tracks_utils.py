@@ -85,7 +85,7 @@ def lazarus(filename):
     with open(filename) as f:
         return pickle.load(f)
         
-def import_queue_gen(q):
+def raise_pairs_from_queue(q):
     """
     Get a queue, iterate and yield a list of two imported LocalAudioFiles
     """
@@ -253,6 +253,10 @@ def lead_in(track):
 		earliest_beat -= avg_duration
 	offset = earliest_beat
 	return offset
+	
+def play(filename):
+	import subprocess
+	subprocess.call(["afplay", filename])
     
 if __name__ == "__main__":
 	print(usage)
