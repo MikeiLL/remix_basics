@@ -215,41 +215,68 @@ def compare(track, rate1="segments", rate2="tatums", direction="first", number=8
         print("No {}.".format(rate2))
         
 def end_trans(track, beats_to_mix = 0):
-    """
-    Return tuples with times to be sent to Playback and Crossmix objects
-    """
-    num_of_segs = 16
-    for seg in track.analysis.segments[-16:]:
-    	if seg.loudness_max < -40:
-    		num_of_segs += 1
-    try:
-    	track.analysis.beats[-1]
-    except IndexError:
-    	return {"playback": (track.analysis.segments[-num_of_segs].start, track.analysis.duration)}
-    avg_duration = sum([b.duration for b in track.analysis.beats[-8:]]) / 8	
-    if beats_to_mix > 0:
-    	track_end = track.analysis.duration - (avg_duration * beats_to_mix)
-    else:
-    	track_end = track.analysis.duration
+	"""
+	Return tuples with times to be sent to Playback and Crossmix objects
+	"""
+	for seg in reversed(track.analysis.segments):
+		if seg.loudness_max > -60:
+			#time of last audible piece of track
+			end_viable = seg.start + seg.duration
+			break
+			
+	num_of_segs = 16
+	for seg in track.analysis.segments[-16:]:
+		if seg.loudness_max < -40:
+			num_of_segs += 1
+	num_of_segs += beats_to_mix
+	while track.analysis.segments[num_of_segs].start <= track.analysis.tatums[beats_to_mix * 2].start:
+		num_of_segs += 16
+	try:
+		track.analysis.tatums[-1]
+	except IndexError:
+		return {"playback": (track.analysis.segments[-num_of_segs].start, track.analysis.duration)}
+	avg_duration = sum([b.duration for b in track.analysis.tatums[-16:]]) / 16	
+	if beats_to_mix > 0:
+		playback_end = end_viable - (avg_duration * beats_to_mix)
+		final =  beats_to_mix * 2
+	else:
+		final = 1
+		playback_end = end_viable
 
-    final_segments = {"last_beat": track.analysis.beats[-1].start,
-                    "subsequent_beat": track.analysis.beats[-1].start}
-    while final_segments['subsequent_beat'] < track_end:
-        final_segments['subsequent_beat'] += avg_duration
+	final_segments = {"subsequent_beat": track.analysis.tatums[-final].start}
+	while final_segments['subsequent_beat'] < playback_end:
+		final_segments['subsequent_beat'] += avg_duration
 
-    #start, end, duration of playback part
-    final_segments["playback"] = (track.analysis.segments[-num_of_segs].start, 
-    							track.analysis.beats[-1].start + track.analysis.beats[-1].duration,
-    							track.analysis.beats[-1].start + track.analysis.beats[-1].duration \
-    															- track.analysis.segments[-num_of_segs].start)
-    
-    #start, end, duration of mix part
-    final_segments["mix_me"] = (final_segments['subsequent_beat'], track.analysis.duration, \
-    														track.analysis.duration - \
-    														final_segments['subsequent_beat']) 
-   
-    return (final_segments['playback'], final_segments["mix_me"])
-    
+	# start, end, duration of playback part
+	# This needs to end at start of mix part
+	final_segments["playback"] = (track.analysis.segments[-num_of_segs].start, 
+								playback_end,
+								playback_end \
+											- track.analysis.segments[-num_of_segs].start)
+
+	#start, end, duration of mix part
+	final_segments["mix_me"] = (final_segments['subsequent_beat'], end_viable, \
+															end_viable - \
+															final_segments['subsequent_beat']) 
+
+	return (final_segments['playback'], final_segments["mix_me"])
+	
+def gimme_two(track1, track2, *args):
+	if not args:
+		tr1 = end_trans(track1)
+		pb1 = pb(track1, tr1[0][0], tr1[0][2])
+		pb2 = pb(track2, 0, pb1.duration + 30)
+	else:
+		tr1 = end_trans(track1, beats_to_mix=args[0])
+		pb1 = pb(track1, tr1[0][0], tr1[0][2])
+		pb2 = cf((track1, track2), (tr1[1][0], 0), pb1.duration + 30)
+	print(track1.analysis.duration)
+	print(track2.analysis.duration)
+	print(tr1[1][0])
+	print(pb1.duration + 30)
+	print(str(tr1))
+	return [pb1, pb2]
+
 def lead_in(track):
 	"""
 	Return the time between start of track and first beat.
@@ -262,6 +289,9 @@ def lead_in(track):
 	return offset
 	
 def play(filename):
+	"""
+	Play track - only works on OSX.
+	"""
 	import subprocess
 	subprocess.call(["afplay", filename])
     
