@@ -273,16 +273,28 @@ def gimme_two(track1, track2, *args):
 		return [pb1, pb2]
 	else:
 		times = end_trans(track1, beats_to_mix=args[0])
+		'''We would start at zero, but make it first audible segment'''
 		t2start = first_viable(track2)
-		t2beat1 = track2.analysis.tatums[0].start
-		# "move" beat 1 forward in time relative to avg duration end of track 1
-		while t2start <= t2beat1:
-			t2beat1 -= times["avg_duration"]
-		''' t2beat1 is now difference between start of track and theoretical downbeat
-		so we'll shorten playback duration and move mix_start that much earlier
-		'''
-		pb1 = pb(track1, times["playback_start"], times["playback_duration"] - t2beat1)
-		pb2 = cf((track1, track2), (times["mix_start"] - t2beat1, t2start), times["mix_duration"])
+		'''offset between start and first theoretical beat.'''
+		t2offset = lead_in(track2)
+		print("offset: {} viable start: {}".format(t2offset, t2start))
+		print('''playback from {} for {}. Crossfade from {} and {} for {}.
+		And the last playback starts on track2 at {}.
+		'''.format(times["playback_start"], times["playback_duration"] - t2offset, \
+			times["mix_start"] - t2offset - t2start, t2start, times["mix_duration"], \
+			t2start + times["mix_duration"]))
+		print('''playback should lead up to mix start. So {} plus {} = {}. {}.
+		It should equal {}.
+		'''.format(times["playback_start"], times["playback_duration"] - t2offset, \
+		times["playback_start"] + times["playback_duration"] - t2offset, \
+		times["playback_start"] + times["playback_duration"] - t2offset == \
+		times["mix_start"] - t2offset - t2start,
+		times["mix_start"] - t2offset - t2start))
+		print('''Track2 mix goes from {} for {}. For playback 3 starts track 2 at {}.
+		'''.format(t2start, times["mix_duration"], \
+		t2start + times["mix_duration"]))
+		pb1 = pb(track1, times["playback_start"], times["playback_duration"] - t2offset)
+		pb2 = cf((track1, track2), (times["playback_start"] + times["playback_duration"] - t2offset, t2start), times["mix_duration"])
 		pb3 = pb(track2, t2start + times["mix_duration"], 10)
 		return [pb1, pb2, pb3]
 
