@@ -231,27 +231,20 @@ def end_trans(track, beats_to_mix = 0):
 	Return tuples with times to be sent to Playback and Crossmix objects
 	"""
 	end_viable = last_viable(track)
+	avg_duration = sum([b.duration for b in track.analysis.tatums[-16:]]) / 16
+	#How much of the track are we returning - adjust for beats to mix?
+	start = track.analysis.duration - (10 + (avg_duration * beats_to_mix))
 	
-	#How much of the track are we returning?
-	num_of_segs = 16
-	for seg in track.analysis.segments[-16:]:
-		#insure at least 16 of vol > -40
-		if seg.loudness_max < -40:
-			num_of_segs += 1
-	#insure that we start at least 16 segments earlier than the first beat of crossfade
-	while track.analysis.segments[num_of_segs].start <= track.analysis.tatums[beats_to_mix * 2].start:
-		num_of_segs += 16
 	try:
 		track.analysis.tatums[-1]
 	except IndexError:
 		# if no tatums play through end of track
-		return {"playback_start": track.analysis.segments[-num_of_segs].start, 
-				"playback_end": track.analysis.duration}
-	avg_duration = sum([b.duration for b in track.analysis.tatums[-16:]]) / 16	
+		return {"playback_start": start, 
+				"playback_end": end_viable}	
 	if beats_to_mix > 0:
 		#if we're crossfading, playback ends at first beat of crossfade
 		playback_end = end_viable - (avg_duration * beats_to_mix)
-		final =  beats_to_mix * 2 #count tatums from end of tatum list
+		final =  beats_to_mix #count tatums from end of tatum list
 	else:
 		#if we're not crossfading playback to end, final beat being last tatum
 		playback_end = end_viable
@@ -262,10 +255,11 @@ def end_trans(track, beats_to_mix = 0):
 		#get first "beat" following end of playback
 		final_segments['subsequent_beat'] += avg_duration
 
-	final_segments["playback_start"] = track.analysis.segments[-num_of_segs].start
+	final_segments["playback_start"] = start
 	final_segments["playback_duration"] = playback_end - final_segments["playback_start"]
 	final_segments["mix_start"] = final_segments['subsequent_beat']
 	final_segments["mix_duration"] = end_viable - final_segments['subsequent_beat']
+	final_segments["avg_duration"] = avg_duration
 	print(str(final_segments))
 
 	return final_segments
@@ -275,13 +269,21 @@ def gimme_two(track1, track2, *args):
 	if not args:
 		times = end_trans(track1)
 		pb1 = pb(track1, times["playback_start"], times["playback_duration"])
-		pb2 = pb(track2, first_viable(track2), pb1.duration + 20)
+		pb2 = pb(track2, first_viable(track2), pb1.duration + 10)
 		return [pb1, pb2]
 	else:
 		times = end_trans(track1, beats_to_mix=args[0])
-		pb1 = pb(track1, times["playback_start"], times["playback_duration"])
-		pb2 = cf((track1, track2), (times["mix_start"], first_viable(track2)), times["mix_duration"])
-		pb3 = pb(track2, first_viable(track2) + times["mix_duration"], 20)
+		t2start = first_viable(track2)
+		t2beat1 = track2.analysis.tatums[0].start
+		# "move" beat 1 forward in time relative to avg duration end of track 1
+		while t2start <= t2beat1:
+			t2beat1 -= times["avg_duration"]
+		''' t2beat1 is now difference between start of track and theoretical downbeat
+		so we'll shorten playback duration and move mix_start that much earlier
+		'''
+		pb1 = pb(track1, times["playback_start"], times["playback_duration"] - t2beat1)
+		pb2 = cf((track1, track2), (times["mix_start"] - t2beat1, t2start), times["mix_duration"])
+		pb3 = pb(track2, t2start + times["mix_duration"], 10)
 		return [pb1, pb2, pb3]
 
 def lead_in(track):
