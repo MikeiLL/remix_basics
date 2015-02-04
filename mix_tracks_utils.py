@@ -277,22 +277,6 @@ def gimme_two(track1, track2, *args):
 		t2start = first_viable(track2)
 		'''offset between start and first theoretical beat.'''
 		t2offset = lead_in(track2)
-		print("offset: {} viable start: {}".format(t2offset, t2start))
-		print('''playback from {} for {}. Crossfade from {} and {} for {}.
-		And the last playback starts on track2 at {}.
-		'''.format(times["playback_start"], times["playback_duration"] - t2offset, \
-			times["mix_start"] - t2offset - t2start, t2start, times["mix_duration"], \
-			t2start + times["mix_duration"]))
-		print('''playback should lead up to mix start. So {} plus {} = {}. {}.
-		It should equal {}.
-		'''.format(times["playback_start"], times["playback_duration"] - t2offset, \
-		times["playback_start"] + times["playback_duration"] - t2offset, \
-		times["playback_start"] + times["playback_duration"] - t2offset == \
-		times["mix_start"] - t2offset - t2start,
-		times["mix_start"] - t2offset - t2start))
-		print('''Track2 mix goes from {} for {}. For playback 3 starts track 2 at {}.
-		'''.format(t2start, times["mix_duration"], \
-		t2start + times["mix_duration"]))
 		pb1 = pb(track1, times["playback_start"], times["playback_duration"] - t2offset)
 		pb2 = cf((track1, track2), (times["playback_start"] + times["playback_duration"] - t2offset, t2start), times["mix_duration"])
 		pb3 = pb(track2, t2start + times["mix_duration"], 10)
