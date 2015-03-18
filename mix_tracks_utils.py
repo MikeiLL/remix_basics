@@ -105,6 +105,9 @@ def raise_pairs_from_queue(q):
         t1 = t2
         
 def lazarus_queue(q):
+	"""
+	Get a queue of saved track filenames and return a container of name: track for each.
+	"""
 	container = {}
 	while not q.empty():
 		track = q.get()	
@@ -148,6 +151,9 @@ def analize(input_filename):
     return audiofile.analysis
     
 def visualize(track):
+	"""
+	Get a track and generate a graph showing relationships between rates at start and end of track.
+	"""
 	import matplotlib.pyplot as plt
 
 	rates = ["tatums", "segments", "beats"]
