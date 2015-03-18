@@ -19,7 +19,10 @@ import echonest.remix.audio as audio
 from Queue import Queue
 from action import Crossfade as cf
 from action import Playback as pb
+from action import Blend as bl
 from action import render
+from action import make_stereo
+
 import glob
 import sys, os
 import pickle
@@ -321,6 +324,31 @@ def lead_in(track):
 		earliest_beat -= avg_duration
 	offset = earliest_beat
 	return offset
+	
+def end_of_track(track1, track2, rate='beats'):
+	"""
+	Return index of beat in longer track which is just beyond shorter track.
+	"""
+	if track1.analysis.duration < track2.analysis.duration:
+		track1, track2 = track2, track1
+	for k, v in enumerate(track1.analysis.beats):
+		if v.start + v.duration > track2.analysis.duration:
+			return (k, v)
+			
+def remove_channel(track, remove="left"):
+	"""
+	Remove left or right channel from stereo track.
+	"""
+	if track.data.ndim == 2:
+		import numpy as np
+		if remove == 'left':
+			track.data = np.delete(track.data, 0, 1)
+		else:
+			track.data = np.delete(track.data, 1, 1) 
+		track = make_stereo(track)
+		return track
+	else:
+		return track
 	
 def play(filename):
 	"""

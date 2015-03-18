@@ -233,6 +233,19 @@ class Blend(object):
         args = (s1, s2, e1, e2, self.duration, n1, n2)
         return "Blend [%.3f, %.3f] -> [%.3f, %.3f] (%.3f)\t%s + %s" % args
 
+        
+class Mix(Blend):
+    """Makes a beat-matched crossfade between the two input tracks."""
+    def render(self):
+        # self has start and duration, so it is a valid index into track.
+        output = self.track[self]
+        # Normalize volume if necessary
+        gain = getattr(self.track, 'gain', None)
+        if gain != None:
+            # limit expects a float32 vector
+            output.data = limit(multiply(output.data, float32(gain)))
+            
+        return output
 
 class Crossmatch(Blend):
     """Makes a beat-matched crossfade between the two input tracks."""
