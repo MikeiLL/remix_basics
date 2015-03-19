@@ -20,6 +20,7 @@ from Queue import Queue
 from action import Crossfade as cf
 from action import Playback as pb
 from action import Blend as bl
+from action import Fadeout as fade
 from action import render
 from action import make_stereo
 
@@ -327,7 +328,7 @@ def lead_in(track):
 	
 def end_of_track(track1, track2, rate='beats'):
 	"""
-	Return index of beat in longer track which is just beyond shorter track.
+	Return index of beat in longer track which is just beyond shorter track duration.
 	"""
 	if track1.analysis.duration < track2.analysis.duration:
 		track1, track2 = track2, track1
@@ -351,6 +352,23 @@ def remove_channel(track, remove="left"):
 		return track
 		
 		'''[(beat.start, beat.duration) for beat in inst1.analysis.beats[:112]]'''
+		
+def left_right_merge(f1, f2):
+	"""Merge the left track of f1 with the right track of f2"""
+	import numpy
+	left = f1.data[:,0]
+	right = f2.data[:,1]
+	# Create holder for both tracks by measuring longer track
+	stereo = numpy.zeros((max(left.shape[0],right.shape[0]),2),dtype=numpy.int16)
+	stereo[:left.shape[0],0] = left
+	stereo[:right.shape[0],1] = right
+	f1.data = stereo
+	return f1
+	
+def format_track(track, itrim=0, otrim=0, fadeout=5):
+	playback = pb(track, itrim, track.analysis.duration - otrim)
+	fadeout = fade(track, track.analysis.duration - otrim, fadeout)
+	return [playback, fadeout]
 	
 def play(filename):
 	"""
