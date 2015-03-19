@@ -349,6 +349,8 @@ def remove_channel(track, remove="left"):
 		return track
 	else:
 		return track
+		
+		'''[(beat.start, beat.duration) for beat in inst1.analysis.beats[:112]]'''
 	
 def play(filename):
 	"""

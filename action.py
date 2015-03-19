@@ -235,17 +235,32 @@ class Blend(object):
 
         
 class Mix(Blend):
-    """Makes a beat-matched crossfade between the two input tracks."""
+    """Mix together two lists of beats"""
+    def __init__(self):
+        super(Blend, self).__init__()
+        print 'I am initialized'
+        
     def render(self):
-        # self has start and duration, so it is a valid index into track.
-        output = self.track[self]
-        # Normalize volume if necessary
-        gain = getattr(self.track, 'gain', None)
-        if gain != None:
-            # limit expects a float32 vector
-            output.data = limit(multiply(output.data, float32(gain)))
-            
-        return output
+        t1, t2 = self.t1, self.t2
+        print(dir(t1))
+        vecout = crossfade(t1.data, t2.data, self.mode)
+        audio_out = AudioData(ndarray=vecout, shape=vecout.shape, 
+                                sampleRate=t1.sampleRate, 
+                                numChannels=vecout.shape[1])
+        return audio_out
+    
+        
+    def __repr__(self):
+        args = (self.t1.filename, self.t2.filename)
+        return "<Mix '%s' and '%s'>" % args
+    
+    def __str__(self):
+        # start and end for each of these lists.
+        s1, e1 = self.l1[0][0], sum(self.l1[-1])
+        s2, e2 = self.l2[0][0], sum(self.l2[-1])
+        n1, n2 = self.t1.filename, self.t2.filename # names
+        args = (s1, s2, e1, e2, self.duration, n1, n2)
+        return "Mix [%.3f, %.3f] -> [%.3f, %.3f] (%.3f)\t%s + %s" % args
 
 class Crossmatch(Blend):
     """Makes a beat-matched crossfade between the two input tracks."""
