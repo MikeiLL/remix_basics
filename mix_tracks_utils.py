@@ -251,6 +251,7 @@ def end_trans(track, beats_to_mix = 0):
 		avg_duration = sum([b.duration for b in track.analysis.segments[-8:]]) / 8
 	#How much of the track are we returning - adjust for beats to mix?
 	start = track.analysis.duration - (10 + (avg_duration * beats_to_mix))
+	print(start)
 	if beats_to_mix > 0:
 		#if we're crossfading, playback ends at first beat of crossfade
 		playback_end = end_viable - (avg_duration * beats_to_mix)
@@ -258,7 +259,7 @@ def end_trans(track, beats_to_mix = 0):
 
 	else:
 		#if we're not crossfading playback to end, final beat being last tatum
-		playback_end = end_viable
+		playback_end = end_viable - 1 # try 10 - seconds?
 		final = 1
 		
 	try:
@@ -293,24 +294,16 @@ def gimme_two(track1, track2, xfade=0, otrim=0, itrim=0):
 	for track in [track1, track2]:
 		loudness = track.analysis.loudness
 		track.gain = db_2_volume(loudness)
-		
-	if xfade == 0:
-		times = end_trans(track1)
-		if times["playback_duration"] - otrim < 0:
-			raise Exception("You can't trim off more than 100%.")
-		pb1 = pb(track1, times["playback_start"], times["playback_duration"] - otrim)
-		pb2 = pb(track2, first_viable(track2) + itrim, pb1.duration + 10)
-		return [pb1, pb2]
-	else:
-		times = end_trans(track1, beats_to_mix=xfade)
-		'''We would start at zero, but make it first audible segment'''
-		t2start = first_viable(track2)
-		'''offset between start and first theoretical beat.'''
-		t2offset = lead_in(track2)
-		pb1 = pb(track1, times["playback_start"], times["playback_duration"] - t2offset)
-		pb2 = cf((track1, track2), (times["playback_start"] + times["playback_duration"] - t2offset, t2start), times["mix_duration"])
-		pb3 = pb(track2, t2start + times["mix_duration"], 10)
-		return [pb1, pb2, pb3]
+	
+	times = end_trans(track1, beats_to_mix=xfade)
+	# We would start at zero, but make it first audible segment
+	t2start = first_viable(track2)
+	# offset between start and first theoretical beat.
+	t2offset = lead_in(track2)
+	pb1 = pb(track1, times["playback_start"], times["playback_duration"] - t2offset)
+	pb2 = cf((track1, track2), (times["playback_start"] + times["playback_duration"] - t2offset, t2start), times["mix_duration"])
+	pb3 = pb(track2, t2start + times["mix_duration"], 10)
+	return [pb1, pb2, pb3]
 
 def lead_in(track):
 	"""
